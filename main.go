@@ -164,6 +164,8 @@ func convertMarkdownToPDF(cfg Config) error {
             page-break-after: avoid;
         }
         ul, ol {
+            margin-top: 4px;
+            margin-bottom: 12px;
             margin-left: 20px;
             padding-left: 20px;
         }

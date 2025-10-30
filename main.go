@@ -119,8 +119,32 @@ func convertMarkdownToPDF(cfg Config) error {
         h1 { font-size: %fpt; margin-top: 20px; }
         h2 { font-size: %fpt; margin-top: 18px; }
         h3 { font-size: %fpt; margin-top: 16px; }
-        code { background-color: #f4f4f4; padding: 2px 4px; }
-        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; }
+        h4 { font-size: %fpt; margin-top: 14px; font-weight: bold; }
+        ul, ol {
+            margin-left: 20px;
+            padding-left: 20px;
+        }
+        li {
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: visible;
+        }
+        p {
+            margin: 8px 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 4px;
+            white-space: nowrap;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
@@ -131,8 +155,9 @@ func convertMarkdownToPDF(cfg Config) error {
 	h1Size := cfg.FontSize + 8
 	h2Size := cfg.FontSize + 6
 	h3Size := cfg.FontSize + 4
+	h4Size := cfg.FontSize + 2
 
-	htmlContent = []byte(fmt.Sprintf(htmlTemplate, cfg.FontSize, h1Size, h2Size, h3Size, string(htmlContent)))
+	htmlContent = []byte(fmt.Sprintf(htmlTemplate, cfg.FontSize, h1Size, h2Size, h3Size, h4Size, string(htmlContent)))
 
 	// Create temporary HTML file
 	tmpHTML := strings.TrimSuffix(cfg.OutputFile, filepath.Ext(cfg.OutputFile)) + "_tmp.html"

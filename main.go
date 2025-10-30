@@ -108,42 +108,49 @@ func convertMarkdownToPDF(cfg Config) error {
 <head>
     <meta charset="UTF-8">
     <style>
+        @page {
+            margin: 20mm;
+        }
         body {
             font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
             font-size: %fpt;
             line-height: 1.6;
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 0 20px;
+            max-width: 100%%;
+            margin: 0;
+            padding: 20px;
         }
-        h1 { font-size: %fpt; margin-top: 20px; }
-        h2 { font-size: %fpt; margin-top: 18px; }
-        h3 { font-size: %fpt; margin-top: 16px; }
-        h4 { font-size: %fpt; margin-top: 14px; font-weight: bold; }
+        h1 { font-size: %fpt; margin-top: 20px; page-break-after: avoid; }
+        h2 { font-size: %fpt; margin-top: 18px; page-break-after: avoid; }
+        h3 { font-size: %fpt; margin-top: 16px; page-break-after: avoid; }
+        h4 { font-size: %fpt; margin-top: 14px; font-weight: bold; page-break-after: avoid; }
         ul, ol {
             margin-left: 20px;
             padding-left: 20px;
         }
         li {
             margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: visible;
+            page-break-inside: avoid;
         }
         p {
             margin: 8px 0;
-            white-space: pre-wrap;
-            word-wrap: break-word;
         }
         code {
             background-color: #f4f4f4;
             padding: 2px 4px;
-            white-space: nowrap;
         }
         pre {
             background-color: #f4f4f4;
             padding: 10px;
             overflow-x: auto;
-            white-space: pre-wrap;
+            page-break-inside: avoid;
+        }
+        @media print {
+            body {
+                max-width: 100%%;
+            }
+            li {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>

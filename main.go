@@ -121,10 +121,48 @@ func convertMarkdownToPDF(cfg Config) error {
             margin: 0;
             padding: 20px;
         }
-        h1 { font-size: %fpt; margin-top: 20px; page-break-after: avoid; }
-        h2 { font-size: %fpt; margin-top: 18px; page-break-after: avoid; }
-        h3 { font-size: %fpt; margin-top: 16px; page-break-after: avoid; }
-        h4 { font-size: %fpt; margin-top: 14px; font-weight: bold; page-break-after: avoid; }
+        h1 {
+            font-size: %fpt;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+        h2 {
+            font-size: %fpt;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+        h3 {
+            font-size: %fpt;
+            margin-top: 16px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+        }
+        h4 {
+            font-size: %fpt;
+            margin-top: 12px;
+            margin-bottom: 6px;
+            margin-left: 0;
+            font-weight: bold;
+            page-break-after: avoid;
+        }
+        h5 {
+            font-size: %fpt;
+            margin-top: 10px;
+            margin-bottom: 4px;
+            margin-left: 0;
+            font-weight: bold;
+            page-break-after: avoid;
+        }
+        h6 {
+            font-size: %fpt;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            margin-left: 0;
+            font-weight: bold;
+            page-break-after: avoid;
+        }
         ul, ol {
             margin-left: 20px;
             padding-left: 20px;
@@ -170,8 +208,10 @@ func convertMarkdownToPDF(cfg Config) error {
 	h2Size := cfg.FontSize + 6
 	h3Size := cfg.FontSize + 4
 	h4Size := cfg.FontSize + 2
+	h5Size := cfg.FontSize + 1
+	h6Size := cfg.FontSize
 
-	htmlContent = []byte(fmt.Sprintf(htmlTemplate, cfg.FontSize, h1Size, h2Size, h3Size, h4Size, string(htmlContent)))
+	htmlContent = []byte(fmt.Sprintf(htmlTemplate, cfg.FontSize, h1Size, h2Size, h3Size, h4Size, h5Size, h6Size, string(htmlContent)))
 
 	// Create temporary HTML file
 	tmpHTML := strings.TrimSuffix(cfg.OutputFile, filepath.Ext(cfg.OutputFile)) + "_tmp.html"

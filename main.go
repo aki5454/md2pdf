@@ -96,7 +96,9 @@ func convertMarkdownToPDF(cfg Config) error {
 	p := parser.NewWithExtensions(extensions)
 	doc := p.Parse(mdContent)
 
+	// Disable Smartypants to prevent fraction rendering (2024/11 -> 2024⁄11)
 	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	htmlFlags &^= html.Smartypants // Remove Smartypants flag
 	opts := html.RendererOptions{Flags: htmlFlags}
 	renderer := html.NewRenderer(opts)
 
@@ -130,6 +132,11 @@ func convertMarkdownToPDF(cfg Config) error {
         li {
             margin-bottom: 4px;
             page-break-inside: avoid;
+            word-break: keep-all;
+            overflow-wrap: normal;
+        }
+        li::marker {
+            unicode-bidi: isolate;
         }
         p {
             margin: 8px 0;

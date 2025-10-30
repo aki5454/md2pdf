@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/jung-kurt/gofpdf"
 )
 
 const (
@@ -102,46 +102,84 @@ func convertMarkdownToPDF(cfg Config) error {
 
 	htmlContent := markdown.Render(doc, renderer)
 
-	// Create PDF
-	pdf := gofpdf.New("P", "mm", cfg.PageSize, "")
-	pdf.AddPage()
-	pdf.SetFont("Arial", "", cfg.FontSize)
+	// Create HTML with Japanese support
+	htmlTemplate := `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+            font-size: %fpt;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        h1 { font-size: %fpt; margin-top: 20px; }
+        h2 { font-size: %fpt; margin-top: 18px; }
+        h3 { font-size: %fpt; margin-top: 16px; }
+        code { background-color: #f4f4f4; padding: 2px 4px; }
+        pre { background-color: #f4f4f4; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+%s
+</body>
+</html>`
 
-	// Parse and write content
-	text := stripHTML(string(htmlContent))
-	lines := strings.Split(text, "\n")
+	h1Size := cfg.FontSize + 8
+	h2Size := cfg.FontSize + 6
+	h3Size := cfg.FontSize + 4
 
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			pdf.Ln(5)
-			continue
+	htmlContent = []byte(fmt.Sprintf(htmlTemplate, cfg.FontSize, h1Size, h2Size, h3Size, string(htmlContent)))
+
+	// Create temporary HTML file
+	tmpHTML := strings.TrimSuffix(cfg.OutputFile, filepath.Ext(cfg.OutputFile)) + "_tmp.html"
+	if err := os.WriteFile(tmpHTML, htmlContent, 0644); err != nil {
+		return fmt.Errorf("failed to write HTML file: %w", err)
+	}
+	defer os.Remove(tmpHTML)
+
+	// Try to use wkhtmltopdf if available
+	if _, err := exec.LookPath("wkhtmltopdf"); err == nil {
+		cmd := exec.Command("wkhtmltopdf",
+			"--page-size", cfg.PageSize,
+			"--encoding", "UTF-8",
+			tmpHTML, cfg.OutputFile)
+
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("wkhtmltopdf failed: %w", err)
 		}
+		return nil
+	}
 
-		// Detect headings (simple heuristic)
-		if strings.HasPrefix(line, "#") {
-			level := strings.Count(strings.Split(line, " ")[0], "#")
-			headingText := strings.TrimSpace(strings.TrimLeft(line, "#"))
-			fontSize := cfg.FontSize + float64(4-level)*2
-			if fontSize < cfg.FontSize {
-				fontSize = cfg.FontSize
-			}
-			pdf.SetFont("Arial", "B", fontSize)
-			pdf.MultiCell(0, 10, headingText, "", "", false)
-			pdf.SetFont("Arial", "", cfg.FontSize)
-			pdf.Ln(3)
-		} else if strings.HasPrefix(line, "* ") || strings.HasPrefix(line, "- ") {
-			// List items
-			itemText := strings.TrimPrefix(strings.TrimPrefix(line, "* "), "- ")
-			pdf.MultiCell(0, 6, "  • "+itemText, "", "", false)
-		} else {
-			pdf.MultiCell(0, 6, line, "", "", false)
+	// Fallback: Try Chrome/Chromium headless
+	chromePaths := []string{
+		"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+		"/Applications/Chromium.app/Contents/MacOS/Chromium",
+		"chromium",
+		"google-chrome",
+	}
+
+	var chromeCmd *exec.Cmd
+	for _, chromePath := range chromePaths {
+		if _, err := exec.LookPath(chromePath); err == nil {
+			chromeCmd = exec.Command(chromePath,
+				"--headless",
+				"--disable-gpu",
+				"--print-to-pdf="+cfg.OutputFile,
+				tmpHTML)
+			break
 		}
 	}
 
-	// Save PDF
-	if err := pdf.OutputFileAndClose(cfg.OutputFile); err != nil {
-		return fmt.Errorf("failed to create PDF: %w", err)
+	if chromeCmd == nil {
+		return fmt.Errorf("no PDF renderer found. Please install wkhtmltopdf or Chrome:\n  brew install wkhtmltopdf")
+	}
+
+	if err := chromeCmd.Run(); err != nil {
+		return fmt.Errorf("chrome headless failed: %w", err)
 	}
 
 	return nil
